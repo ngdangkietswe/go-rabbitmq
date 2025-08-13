@@ -6,6 +6,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -20,10 +21,10 @@ import (
 )
 
 func main() {
-	appConfig := config.NewAppConfig("./configs")
+	config.NewAppConfig("./configs")
 
-	httpPort := appConfig.GetHttpPort()
-	rabbitMQUrl := appConfig.GetRabbitMQUrl()
+	httpPort := config.GetInt("HTTP_PORT", 3000)
+	rabbitMQUrl := config.GetString("RABBITMQ_URL", "amqp://admin:admin123@localhost:5672/")
 
 	log.Println("Starting Notification API with RabbitMQ URL:", rabbitMQUrl)
 	time.Sleep(10 * time.Second) // Simulate some startup delay
@@ -63,9 +64,9 @@ func main() {
 		}
 	}()
 
-	log.Printf("Server is running on port %s", httpPort)
+	log.Printf("Starting server on port %d...", httpPort)
 
-	if err := app.Listen(":" + httpPort); err != nil {
+	if err := app.Listen(fmt.Sprintf(":%d", httpPort)); err != nil {
 		log.Fatalf("Error starting server: %v", err)
 	}
 }

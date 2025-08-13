@@ -17,10 +17,9 @@ import (
 )
 
 func main() {
-	appConfig := config.NewAppConfig("./configs")
+	config.NewAppConfig("./configs")
 
-	rabbitMQUrl := appConfig.GetRabbitMQUrl()
-
+	rabbitMQUrl := config.GetString("RABBITMQ_URL", "amqp://admin:admin123@localhost:5672/")
 	log.Println("Starting Notification Worker with RabbitMQ URL:", rabbitMQUrl)
 	time.Sleep(10 * time.Second) // Simulate some startup delay
 
