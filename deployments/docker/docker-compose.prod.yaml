@@ -25,7 +25,7 @@ services:
     environment:
       - ENV=production
       - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672/
-      - PORT=3000
+      - HTTP_PORT=3000
     depends_on:
       - rabbitmq
     networks:

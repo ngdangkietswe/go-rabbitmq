@@ -13,12 +13,6 @@ import (
 	"os"
 )
 
-type AppConfig struct {
-	Env         string `mapstructure:"ENV"`
-	HttpPort    string `mapstructure:"PORT"`
-	RabbitMQUrl string `mapstructure:"RABBITMQ_URL"`
-}
-
 const (
 	DevelopmentEnv = "development"
 )
