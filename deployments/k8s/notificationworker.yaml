@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: notificationworker-config
+data:
+  ENV: "production"
+  RABBITMQ_URL: "amqp://admin:admin123@rabbitmq:5672/"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notificationworker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notificationworker
+  template:
+    metadata:
+      labels:
+        app: notificationworker
+    spec:
+      containers:
+        - name: notificationworker
+          image: 01092002/go-rabbitmq-notification-worker:latest
+          envFrom:
+            - configMapRef:
+                name: notificationworker-config
+          volumeMounts:
+            - name: rabbitmq-data
+              mountPath: /var/lib/rabbitmq
+      volumes:
+        - name: rabbitmq-data
+          persistentVolumeClaim:
+            claimName: rabbitmq-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notificationworker
+spec:
+  selector:
+    app: notificationworker
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+  type: ClusterIP

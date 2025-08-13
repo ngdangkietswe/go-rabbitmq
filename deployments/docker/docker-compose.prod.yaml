@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: notification_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - notification_network
+
+  notification-api:
+    build:
+      context: ../../
+      dockerfile: deployments/docker/Dockerfile.api
+    container_name: notification_api
+    ports:
+      - "3000:3000"
+    environment:
+      - ENV=production
+      - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672/
+      - PORT=3000
+    depends_on:
+      - rabbitmq
+    networks:
+      - notification_network
+    restart: unless-stopped
+
+  notification-worker:
+    build:
+      context: ../../
+      dockerfile: deployments/docker/Dockerfile.worker
+    container_name: notification_worker
+    environment:
+      - ENV=production
+      - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672/
+    depends_on:
+      - rabbitmq
+    networks:
+      - notification_network
+    restart: unless-stopped
+
+volumes:
+  rabbitmq_data:
+
+networks:
+  notification_network:
+    driver: bridge
