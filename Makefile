@@ -27,3 +27,6 @@ kube-apply-notificationworker:
 	cd deployments/k8s && kubectl apply -f notificationworker.yaml
 kube-delete-notificationworker:
 	cd deployments/k8s && kubectl delete -f notificationworker.yaml
+
+kube-forward-notificationapi-port:
+	cd deployments/k8s && kubectl port-forward svc/notificationapi 3000:3000

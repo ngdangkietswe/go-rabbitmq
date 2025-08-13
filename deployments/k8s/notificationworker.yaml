@@ -26,16 +26,3 @@ spec:
           envFrom:
             - configMapRef:
                 name: notificationworker-config
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: notificationworker
-spec:
-  selector:
-    app: notificationworker
-  ports:
-    - port: 8080
-      targetPort: 8080
-      protocol: TCP
-  type: ClusterIP
