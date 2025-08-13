@@ -40,7 +40,7 @@ func (cfg *AppConfig) GetHttpPort() string {
 
 func (cfg *AppConfig) GetRabbitMQUrl() string {
 	if cfg.RabbitMQUrl == "" {
-		return "amqp://guest:guest@localhost:5672/"
+		return "amqp://admin:admin123@localhost:5672/"
 	}
 	return cfg.RabbitMQUrl
 }
@@ -65,11 +65,14 @@ func loadConfig(path string) (config AppConfig, err error) {
 		if err := viper.ReadInConfig(); err != nil {
 			return config, fmt.Errorf("failed to read config file: %w", err)
 		}
+	}
 
-		if err := viper.Unmarshal(&config); err != nil {
-			return config, fmt.Errorf("failed to unmarshal config: %w", err)
-		}
+	if err := viper.Unmarshal(&config); err != nil {
+		return config, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
 
+	if env == DevelopmentEnv {
+		fmt.Println("Current configuration settings on development environment:")
 		settings := viper.AllSettings()
 		jsonBytes, _ := json.MarshalIndent(settings, "", "  ")
 		fmt.Println(string(jsonBytes))

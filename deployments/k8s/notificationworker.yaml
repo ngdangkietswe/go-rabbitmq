@@ -26,13 +26,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: notificationworker-config
-          volumeMounts:
-            - name: rabbitmq-data
-              mountPath: /var/lib/rabbitmq
-      volumes:
-        - name: rabbitmq-data
-          persistentVolumeClaim:
-            claimName: rabbitmq-data-pvc
 ---
 apiVersion: v1
 kind: Service
