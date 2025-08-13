@@ -12,6 +12,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/config"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/handlers"
+	"github.com/ngdangkietswe/go-rabbitmq/internal/routes"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/services"
 	"log"
 	"os"
@@ -46,12 +47,10 @@ func main() {
 	app.Use(logger.New())
 	app.Use(cors.New())
 
-	api := app.Group("/api/v1")
-
 	notificationHandler := handlers.NewNotificationHandler(rabbitMQ)
 
-	api.Get("/health", notificationHandler.HealthCheck)
-	api.Post("/notifications", notificationHandler.SendNotification)
+	appRoutes := routes.NewAppRoutes(notificationHandler)
+	appRoutes.Register(app)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)

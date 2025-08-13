@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/models"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/services"
-	"time"
 )
 
 type NotificationHandler struct {
@@ -21,14 +20,6 @@ func NewNotificationHandler(rabbitMQ *services.RabbitMQService) *NotificationHan
 	return &NotificationHandler{
 		rabbitMQ: rabbitMQ,
 	}
-}
-
-func (h *NotificationHandler) HealthCheck(ctx *fiber.Ctx) error {
-	return ctx.JSON(fiber.Map{
-		"status":    "ok",
-		"message":   "Notification service is running",
-		"timestamp": time.Now().Format(time.RFC3339),
-	})
 }
 
 func (h *NotificationHandler) SendNotification(ctx *fiber.Ctx) error {
