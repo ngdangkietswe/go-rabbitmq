@@ -16,9 +16,7 @@ services:
       - notification_network
 
   notification-api:
-    build:
-      context: ../../
-      dockerfile: deployments/docker/Dockerfile.api
+    image: 01092002/go-rabbitmq-notification-api:latest
     container_name: notification_api
     ports:
       - "3000:3000"
@@ -33,9 +31,7 @@ services:
     restart: unless-stopped
 
   notification-worker:
-    build:
-      context: ../../
-      dockerfile: deployments/docker/Dockerfile.worker
+    image: 01092002/go-rabbitmq-notification-worker:latest
     container_name: notification_worker
     environment:
       - ENV=production
