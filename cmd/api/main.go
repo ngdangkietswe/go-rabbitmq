@@ -8,10 +8,11 @@ package main
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/swagger"
+	_ "github.com/ngdangkietswe/go-rabbitmq/docs" // swagger docs
 	"github.com/ngdangkietswe/go-rabbitmq/internal/config"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/handlers"
+	"github.com/ngdangkietswe/go-rabbitmq/internal/middlewares"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/routes"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/services"
 	"log"
@@ -21,6 +22,17 @@ import (
 	"time"
 )
 
+// @title Notification Service API
+// @version 1.0
+// @description This is a notification service API with RabbitMQ integration
+// @termsOfService http://swagger.io/terms/
+// @contact.name API Support
+// @contact.email ngdangkietswe@yopmail.com
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+// @host localhost:3000
+// @BasePath /api/v1
+// @schemes http https
 func main() {
 	config.NewAppConfig("./configs")
 
@@ -44,8 +56,10 @@ func main() {
 		AppName: "Notification Service v1.0",
 	})
 
-	app.Use(logger.New())
-	app.Use(cors.New())
+	app.Use(middlewares.NewLogger())
+	app.Use(middlewares.NewCORS())
+
+	app.Get("/swagger/*", swagger.HandlerDefault)
 
 	notificationHandler := handlers.NewNotificationHandler(rabbitMQ)
 

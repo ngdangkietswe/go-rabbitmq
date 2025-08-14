@@ -22,6 +22,17 @@ func NewNotificationHandler(rabbitMQ *services.RabbitMQService) *NotificationHan
 	}
 }
 
+// SendNotification handles the request to send a notification.
+// @Summary Send a notification
+// @Description Send a notification to a recipient
+// @Tags Notifications
+// @Accept json
+// @Produce json
+// @Param notification body models.SendNotificationRequest true "Notification request"
+// @Success 202 {object} models.SendNotificationResponse
+// @Failure 400 {object} fiber.Error "Invalid request"
+// @Failure 500 {object} fiber.Error "Internal server error"
+// @Router /api/v1/notifications [post]
 func (h *NotificationHandler) SendNotification(ctx *fiber.Ctx) error {
 	var notificationRequest models.SendNotificationRequest
 

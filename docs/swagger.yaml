@@ -1,0 +1,94 @@
+basePath: /api/v1
+definitions:
+  fiber.Error:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+  fiber.Map:
+    additionalProperties: true
+    type: object
+  models.SendNotificationRequest:
+    properties:
+      message:
+        type: string
+      meta_data:
+        additionalProperties: true
+        description: Optional metadata for additional information
+        type: object
+      recipient:
+        type: string
+      title:
+        type: string
+      type:
+        type: string
+    type: object
+  models.SendNotificationResponse:
+    properties:
+      id:
+        type: string
+      status:
+        type: string
+    type: object
+host: localhost:3000
+info:
+  contact:
+    email: ngdangkietswe@yopmail.com
+    name: API Support
+  description: This is a notification service API with RabbitMQ integration
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Notification Service API
+  version: "1.0"
+paths:
+  /api/v1/health:
+    get:
+      description: Check if the notification service is running
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Service is running
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Health check
+      tags:
+      - Health
+  /api/v1/notifications:
+    post:
+      consumes:
+      - application/json
+      description: Send a notification to a recipient
+      parameters:
+      - description: Notification request
+        in: body
+        name: notification
+        required: true
+        schema:
+          $ref: '#/definitions/models.SendNotificationRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/models.SendNotificationResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/fiber.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Error'
+      summary: Send a notification
+      tags:
+      - Notifications
+schemes:
+- http
+- https
+swagger: "2.0"

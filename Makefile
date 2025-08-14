@@ -1,5 +1,5 @@
 docker-run-rabbitmq:
-	cd deployments/docker && docker-compose -f docker-compose.docker-compose.rabbitmq.yaml up -d
+	cd deployments/docker && docker-compose -f docker-compose.rabbitmq.yaml up -d
 docker-run-dev:
 	cd deployments/docker && docker-compose -f docker-compose.dev.yaml up -d
 docker-run-prod:
@@ -34,3 +34,6 @@ kube-delete-notificationworker:
 
 kube-forward-notificationapi-port:
 	cd deployments/k8s && kubectl port-forward svc/notificationapi 3000:3000
+
+swag-init:
+	swag init -g cmd/api/main.go -o ./docs --parseDependency --parseInternal
