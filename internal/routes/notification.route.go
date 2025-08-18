@@ -8,7 +8,6 @@ package routes
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/handlers"
-	"log"
 )
 
 type NotificationRoutes struct {
@@ -25,6 +24,4 @@ func (r *NotificationRoutes) Register(router fiber.Router) {
 	notification := router.Group("/notifications")
 
 	notification.Post("/", r.notificationHandler.SendNotification)
-
-	log.Printf("Notification routes registered successfully")
 }

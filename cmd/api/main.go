@@ -15,6 +15,8 @@ import (
 	"github.com/ngdangkietswe/go-rabbitmq/internal/middlewares"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/routes"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/services"
+	"github.com/ngdangkietswe/go-rabbitmq/pkg/logger"
+	"go.uber.org/zap"
 	"log"
 	"os"
 	"os/signal"
@@ -36,13 +38,17 @@ import (
 func main() {
 	config.NewAppConfig("./configs")
 
+	env := config.GetString("ENV", "development")
 	httpPort := config.GetInt("HTTP_PORT", 3000)
 	rabbitMQUrl := config.GetString("RABBITMQ_URL", "amqp://admin:admin123@localhost:5672/")
 
-	log.Println("Starting Notification API with RabbitMQ URL:", rabbitMQUrl)
+	appLogger := logger.NewAppLogger(env)
+
+	appLogger.Info("Connecting to RabbitMQ", zap.String("url", rabbitMQUrl))
+
 	time.Sleep(10 * time.Second) // Simulate some startup delay
 
-	rabbitMQ, err := services.NewRabbitMQService(rabbitMQUrl)
+	rabbitMQ, err := services.NewRabbitMQService(rabbitMQUrl, appLogger)
 	if err != nil {
 		log.Fatalf("Failed to connect to RabbitMQ: %v", err)
 	}
@@ -61,7 +67,7 @@ func main() {
 
 	app.Get("/swagger/*", swagger.HandlerDefault)
 
-	notificationHandler := handlers.NewNotificationHandler(rabbitMQ)
+	notificationHandler := handlers.NewNotificationHandler(rabbitMQ, appLogger)
 
 	appRoutes := routes.NewAppRoutes(notificationHandler)
 	appRoutes.Register(app)
@@ -77,7 +83,7 @@ func main() {
 		}
 	}()
 
-	log.Printf("Starting server on port %d...", httpPort)
+	appLogger.Info("Starting server", zap.Int("port", httpPort))
 
 	if err := app.Listen(fmt.Sprintf(":%d", httpPort)); err != nil {
 		log.Fatalf("Error starting server: %v", err)

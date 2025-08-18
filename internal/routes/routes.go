@@ -34,7 +34,7 @@ func (r *AppRoutes) Register(app *fiber.App) {
 	// Additional routes can be registered here
 }
 
-// HealthCheck handles the health check endpoint.
+// HealthCheck godoc
 // @Summary Health check
 // @Description Check if the notification service is running
 // @Tags Health

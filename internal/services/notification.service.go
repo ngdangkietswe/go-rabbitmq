@@ -8,21 +8,24 @@ package services
 import (
 	"fmt"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/models"
-	"log"
+	"go.uber.org/zap"
 	"time"
 )
 
 type NotificationService struct {
+	logger *zap.Logger
 }
 
-func NewNotificationService() *NotificationService {
-	return &NotificationService{}
+func NewNotificationService(logger *zap.Logger) *NotificationService {
+	return &NotificationService{
+		logger: logger,
+	}
 }
 
 func (ns *NotificationService) ProcessNotification(notification *models.Notification) error {
 	notification.Status = models.NotificationStatusProcessing
 
-	log.Printf("Processing %s notification: %s", notification.Type, notification.ID)
+	ns.logger.Info("Processing notification", zap.String("id", notification.ID), zap.String("type", string(notification.Type)), zap.String("recipient", notification.Recipient))
 
 	switch notification.Type {
 	case models.NotificationTypeEmail:
@@ -50,25 +53,25 @@ func (ns *NotificationService) ProcessNotification(notification *models.Notifica
 	notification.Status = models.NotificationStatusSent
 	notification.SentAt = &now
 
-	log.Printf("Notification %s processed successfully", notification.ID)
+	ns.logger.Info("Notification sent successfully", zap.String("id", notification.ID), zap.String("type", string(notification.Type)), zap.String("recipient", notification.Recipient))
 
 	return nil
 }
 
 func (ns *NotificationService) sendEmail(notification *models.Notification) error {
 	// Implement email sending logic here
-	log.Printf("Sending email to %s: %s", notification.Recipient, notification.Message)
+	ns.logger.Info("Sending email", zap.String("recipient", notification.Recipient), zap.String("message", notification.Message))
 	return nil
 }
 
 func (ns *NotificationService) sendSMS(notification *models.Notification) error {
 	// Implement SMS sending logic here
-	log.Printf("Sending SMS to %s: %s", notification.Recipient, notification.Message)
+	ns.logger.Info("Sending SMS", zap.String("recipient", notification.Recipient), zap.String("message", notification.Message))
 	return nil
 }
 
 func (ns *NotificationService) sendPush(notification *models.Notification) error {
 	// Implement push notification sending logic here
-	log.Printf("Sending push notification to %s: %s", notification.Recipient, notification.Message)
+	ns.logger.Info("Sending push", zap.String("recipient", notification.Recipient), zap.String("message", notification.Message))
 	return nil
 }

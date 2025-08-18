@@ -10,19 +10,22 @@ import (
 	"github.com/google/uuid"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/models"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/services"
+	"go.uber.org/zap"
 )
 
 type NotificationHandler struct {
 	rabbitMQ *services.RabbitMQService
+	logger   *zap.Logger
 }
 
-func NewNotificationHandler(rabbitMQ *services.RabbitMQService) *NotificationHandler {
+func NewNotificationHandler(rabbitMQ *services.RabbitMQService, logger *zap.Logger) *NotificationHandler {
 	return &NotificationHandler{
 		rabbitMQ: rabbitMQ,
+		logger:   logger,
 	}
 }
 
-// SendNotification handles the request to send a notification.
+// SendNotification godoc
 // @Summary Send a notification
 // @Description Send a notification to a recipient
 // @Tags Notifications

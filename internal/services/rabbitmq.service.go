@@ -9,23 +9,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/models"
+	"github.com/ngdangkietswe/go-rabbitmq/pkg/constants"
 	amqp "github.com/rabbitmq/amqp091-go"
-	"log"
+	"go.uber.org/zap"
 	"time"
 )
 
-const (
-	NotificationQueue      = "notification_queue"
-	NotificationExchange   = "notification_exchange"
-	NotificationRoutingKey = "notification"
-)
-
 type RabbitMQService struct {
-	conn *amqp.Connection
-	ch   *amqp.Channel
+	conn   *amqp.Connection
+	ch     *amqp.Channel
+	logger *zap.Logger
 }
 
-func NewRabbitMQService(url string) (*RabbitMQService, error) {
+func NewRabbitMQService(url string, logger *zap.Logger) (*RabbitMQService, error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
@@ -36,7 +32,7 @@ func NewRabbitMQService(url string) (*RabbitMQService, error) {
 		return nil, err
 	}
 
-	service := &RabbitMQService{conn: conn, ch: ch}
+	service := &RabbitMQService{conn: conn, ch: ch, logger: logger}
 
 	if err := service.setupExchange(); err != nil {
 		if err := service.Close(); err != nil {
@@ -57,7 +53,7 @@ func NewRabbitMQService(url string) (*RabbitMQService, error) {
 
 func (r *RabbitMQService) setupExchange() error {
 	if err := r.ch.ExchangeDeclare(
-		NotificationExchange,
+		string(constants.ExchangeNotification),
 		"direct",
 		true,
 		false,
@@ -73,7 +69,7 @@ func (r *RabbitMQService) setupExchange() error {
 
 func (r *RabbitMQService) setupQueue() error {
 	if _, err := r.ch.QueueDeclare(
-		NotificationQueue,
+		string(constants.QueueNotification),
 		true,
 		false,
 		false,
@@ -84,9 +80,9 @@ func (r *RabbitMQService) setupQueue() error {
 	}
 
 	if err := r.ch.QueueBind(
-		NotificationQueue,
-		NotificationRoutingKey,
-		NotificationExchange,
+		string(constants.QueueNotification),
+		string(constants.RoutingKeyNotification),
+		string(constants.ExchangeNotification),
 		false,
 		nil,
 	); err != nil {
@@ -103,8 +99,8 @@ func (r *RabbitMQService) PublishMessage(notification *models.Notification) erro
 	}
 
 	if err = r.ch.Publish(
-		NotificationExchange,
-		NotificationRoutingKey,
+		string(constants.ExchangeNotification),
+		string(constants.RoutingKeyNotification),
 		false,
 		false,
 		amqp.Publishing{
@@ -117,14 +113,14 @@ func (r *RabbitMQService) PublishMessage(notification *models.Notification) erro
 		return fmt.Errorf("failed to publish message: %w", err)
 	}
 
-	log.Printf("Published notification: %s", notification.ID)
+	r.logger.Info("Published notification", zap.String("id", notification.ID))
 
 	return nil
 }
 
 func (r *RabbitMQService) ConsumeMessages(handler func(notification *models.Notification) error) error {
 	msgs, err := r.ch.Consume(
-		NotificationQueue,
+		string(constants.QueueNotification),
 		"",
 		false,
 		false,
@@ -137,7 +133,7 @@ func (r *RabbitMQService) ConsumeMessages(handler func(notification *models.Noti
 		return fmt.Errorf("failed to register consumer: %w", err)
 	}
 
-	log.Printf("Waiting for messages in queue: %s", NotificationQueue)
+	r.logger.Info("Consumer registered for notifications", zap.String("queue", string(constants.QueueNotification)))
 
 	forever := make(chan bool)
 
@@ -145,7 +141,7 @@ func (r *RabbitMQService) ConsumeMessages(handler func(notification *models.Noti
 		for msg := range msgs {
 			var notification models.Notification
 			if err := json.Unmarshal(msg.Body, &notification); err != nil {
-				log.Printf("Failed to unmarshal message: %s", err)
+				r.logger.Error("Failed to unmarshal notification", zap.Error(err))
 				err := msg.Nack(false, false)
 				if err != nil {
 					return
@@ -153,16 +149,16 @@ func (r *RabbitMQService) ConsumeMessages(handler func(notification *models.Noti
 				continue
 			}
 
-			log.Printf("Received notification: %s", notification.ID)
+			r.logger.Info("Received notification", zap.String("id", notification.ID))
 
 			if err := handler(&notification); err != nil {
-				log.Printf("Error processing notification: %s", err)
+				r.logger.Error("Failed to process notification", zap.String("id", notification.ID), zap.Error(err))
 				err := msg.Nack(false, false)
 				if err != nil {
 					return
 				} // Reject the message
 			} else {
-				log.Printf("Successfully processed notification: %s", notification.ID)
+				r.logger.Info("Processed notification successfully", zap.String("id", notification.ID))
 				err := msg.Ack(false)
 				if err != nil {
 					return
