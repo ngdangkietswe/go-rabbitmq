@@ -51,5 +51,5 @@ jobs:
           file: deployments/docker/Dockerfile.worker
           push: true
           tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-worker:latest
-            ${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-worker:${{ github.sha }}
+            docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-worker:latest
+            docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-worker:${{ github.sha }}

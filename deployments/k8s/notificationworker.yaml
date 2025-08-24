@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: notificationworker
+  namespace: go-rabbitmq-production
 spec:
   replicas: 1
   selector:
@@ -14,7 +15,7 @@ spec:
     spec:
       containers:
         - name: notificationworker
-          image: 01092002/go-rabbitmq-notification-worker:latest
+          image: docker.io/01092002/go-rabbitmq-notification-worker:latest
           envFrom:
             - configMapRef:
                 name: common-config

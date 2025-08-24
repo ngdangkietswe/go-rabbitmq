@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: notificationapi
+  namespace: go-rabbitmq-production
 spec:
   replicas: 1
   selector:
@@ -14,7 +15,7 @@ spec:
     spec:
       containers:
         - name: notificationapi
-          image: 01092002/go-rabbitmq-notification-api:latest
+          image: docker.io/01092002/go-rabbitmq-notification-api:latest
           ports:
             - containerPort: 3000
           envFrom:

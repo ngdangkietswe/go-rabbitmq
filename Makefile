@@ -35,5 +35,8 @@ kube-delete-notificationworker:
 kube-forward-notificationapi-port:
 	cd deployments/k8s && kubectl port-forward svc/notificationapi 3000:3000
 
+terraform-apply:
+	cd scripts && bash terraform.sh
+
 swag-init:
 	swag init -g cmd/api/main.go -o ./docs --parseDependency --parseInternal
