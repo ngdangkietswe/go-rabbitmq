@@ -8,17 +8,23 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ngdangkietswe/go-rabbitmq/internal/config"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/models"
 	"github.com/ngdangkietswe/go-rabbitmq/pkg/constants"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
+	"net/http"
 	"time"
 )
 
 type RabbitMQService struct {
-	conn   *amqp.Connection
-	ch     *amqp.Channel
-	logger *zap.Logger
+	conn                   *amqp.Connection
+	ch                     *amqp.Channel
+	logger                 *zap.Logger
+	rabbitMQManagementAddr string
+	rabbitMQVHost          string
+	rabbitMQUsername       string
+	rabbitMQPassword       string
 }
 
 func NewRabbitMQService(url string, logger *zap.Logger) (*RabbitMQService, error) {
@@ -32,7 +38,15 @@ func NewRabbitMQService(url string, logger *zap.Logger) (*RabbitMQService, error
 		return nil, err
 	}
 
-	service := &RabbitMQService{conn: conn, ch: ch, logger: logger}
+	service := &RabbitMQService{
+		conn:                   conn,
+		ch:                     ch,
+		logger:                 logger,
+		rabbitMQManagementAddr: config.GetString("RABBITMQ_MANAGEMENT_ADDRESS", "http://localhost:15672"),
+		rabbitMQVHost:          config.GetString("RABBITMQ_VHOST", "%2F"),
+		rabbitMQUsername:       config.GetString("RABBITMQ_USERNAME", "admin"),
+		rabbitMQPassword:       config.GetString("RABBITMQ_PASSWORD", "admin123"),
+	}
 
 	if err := service.setupExchange(); err != nil {
 		if err := service.Close(); err != nil {
@@ -170,6 +184,53 @@ func (r *RabbitMQService) ConsumeMessages(handler func(notification *models.Noti
 	<-forever
 
 	return nil
+}
+
+func (r *RabbitMQService) GetListQueues() ([]map[string]any, error) {
+	url := fmt.Sprintf("%s/api/queues/%s", r.rabbitMQManagementAddr, r.rabbitMQVHost)
+
+	return r.getAndDecodeAPI(url)
+}
+
+func (r *RabbitMQService) GetListExchanges() ([]map[string]any, error) {
+	url := fmt.Sprintf("%s/api/exchanges/%s", r.rabbitMQManagementAddr, r.rabbitMQVHost)
+
+	return r.getAndDecodeAPI(url)
+}
+
+func (r *RabbitMQService) GetListBindings() ([]map[string]any, error) {
+	url := fmt.Sprintf("%s/api/bindings/%s", r.rabbitMQManagementAddr, r.rabbitMQVHost)
+
+	return r.getAndDecodeAPI(url)
+}
+
+func (r *RabbitMQService) getAndDecodeAPI(url string) ([]map[string]any, error) {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("create request: %w", err)
+	}
+	req.SetBasicAuth(r.rabbitMQUsername, r.rabbitMQPassword)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("send request: %w", err)
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			r.logger.Error("failed to close response body", zap.Error(err))
+		}
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %s", resp.Status)
+	}
+
+	var data []map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		return nil, fmt.Errorf("decode response body: %w", err)
+	}
+
+	return data, nil
 }
 
 func (r *RabbitMQService) Close() error {

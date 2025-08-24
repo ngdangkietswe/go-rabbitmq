@@ -68,8 +68,9 @@ func main() {
 	app.Get("/swagger/*", swagger.HandlerDefault)
 
 	notificationHandler := handlers.NewNotificationHandler(rabbitMQ, appLogger)
+	rabbitMQHandler := handlers.NewRabbitMQHandler(rabbitMQ, appLogger)
 
-	appRoutes := routes.NewAppRoutes(notificationHandler)
+	appRoutes := routes.NewAppRoutes(notificationHandler, rabbitMQHandler)
 	appRoutes.Register(app)
 
 	c := make(chan os.Signal, 1)

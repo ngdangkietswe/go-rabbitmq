@@ -86,6 +86,102 @@
                     }
                 }
             }
+        },
+        "/api/v1/rabbitmq/bindings": {
+            "get": {
+                "description": "Retrieve a list of all RabbitMQ bindings",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "RabbitMQ"
+                ],
+                "summary": "Get list of RabbitMQ bindings",
+                "responses": {
+                    "200": {
+                        "description": "List of RabbitMQ bindings",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/rabbitmq/exchanges": {
+            "get": {
+                "description": "Retrieve a list of all RabbitMQ exchanges",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "RabbitMQ"
+                ],
+                "summary": "Get list of RabbitMQ exchanges",
+                "responses": {
+                    "200": {
+                        "description": "List of RabbitMQ exchanges",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/rabbitmq/queues": {
+            "get": {
+                "description": "Retrieve a list of all RabbitMQ queues",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "RabbitMQ"
+                ],
+                "summary": "Get list of RabbitMQ queues",
+                "responses": {
+                    "200": {
+                        "description": "List of RabbitMQ queues",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Error"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {

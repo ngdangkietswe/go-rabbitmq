@@ -13,11 +13,13 @@ import (
 
 type AppRoutes struct {
 	notificationHandler *handlers.NotificationHandler
+	rabbitMQHandler     *handlers.RabbitMQHandler
 }
 
-func NewAppRoutes(notificationHandler *handlers.NotificationHandler) *AppRoutes {
+func NewAppRoutes(notificationHandler *handlers.NotificationHandler, rabbitMQHandler *handlers.RabbitMQHandler) *AppRoutes {
 	return &AppRoutes{
 		notificationHandler: notificationHandler,
+		rabbitMQHandler:     rabbitMQHandler,
 	}
 }
 
@@ -30,6 +32,10 @@ func (r *AppRoutes) Register(app *fiber.App) {
 	// Notification routes
 	notificationRoutes := NewNotificationRoutes(r.notificationHandler)
 	notificationRoutes.Register(api)
+
+	// RabbitMQ routes
+	rabbitMQRoutes := NewRabbitMQRoutes(r.rabbitMQHandler)
+	rabbitMQRoutes.Register(api)
 
 	// Additional routes can be registered here
 }

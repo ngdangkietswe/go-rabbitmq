@@ -88,6 +88,69 @@ paths:
       summary: Send a notification
       tags:
       - Notifications
+  /api/v1/rabbitmq/bindings:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all RabbitMQ bindings
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of RabbitMQ bindings
+          schema:
+            items:
+              type: object
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Error'
+      summary: Get list of RabbitMQ bindings
+      tags:
+      - RabbitMQ
+  /api/v1/rabbitmq/exchanges:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all RabbitMQ exchanges
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of RabbitMQ exchanges
+          schema:
+            items:
+              type: object
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Error'
+      summary: Get list of RabbitMQ exchanges
+      tags:
+      - RabbitMQ
+  /api/v1/rabbitmq/queues:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all RabbitMQ queues
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of RabbitMQ queues
+          schema:
+            items:
+              type: object
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Error'
+      summary: Get list of RabbitMQ queues
+      tags:
+      - RabbitMQ
 schemes:
 - http
 - https
