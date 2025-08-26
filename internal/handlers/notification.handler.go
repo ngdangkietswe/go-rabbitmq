@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/models"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/services"
+	"github.com/ngdangkietswe/go-rabbitmq/pkg/constants"
 	"go.uber.org/zap"
 )
 
@@ -63,7 +64,7 @@ func (h *NotificationHandler) SendNotification(ctx *fiber.Ctx) error {
 		Status:    models.NotificationStatusPending,
 	}
 
-	if err := h.rabbitMQ.PublishMessage(notification); err != nil {
+	if err := h.rabbitMQ.PublishMessage(string(constants.ExchangeNotification), string(constants.RoutingKeyNotification), notification); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "Failed to publish notification")
 	}
 

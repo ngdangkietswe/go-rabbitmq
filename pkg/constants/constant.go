@@ -16,17 +16,20 @@ const (
 type Queue string
 
 const (
-	QueueNotification Queue = "notification_queue"
+	QueueNotification Queue = "queue_notification"
+	QueueLog          Queue = "queue_log"
 )
 
 type Exchange string
 
 const (
-	ExchangeNotification Exchange = "notification_exchange"
+	ExchangeNotification Exchange = "exchange_notification"
+	ExchangeLog          Exchange = "exchange_log"
 )
 
 type RoutingKey string
 
 const (
-	RoutingKeyNotification RoutingKey = "notification"
+	RoutingKeyNotification RoutingKey = "notification.created"
+	RoutingKeyLog          RoutingKey = "log.created"
 )

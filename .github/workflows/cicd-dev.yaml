@@ -1,13 +1,13 @@
-name: Build and Push Docker Images
+name: Build and Push Docker Images (DEV)
 
 on:
   push:
     branches:
-      - main
       - develop
 
 jobs:
   build:
+    name: Build and Push Docker Images (DEV)
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -24,19 +24,13 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Set Docker Tags
-        run: |
-          if [[ "${GITHUB_REF##*/}" == "main" ]]; then
-            echo "TAG=prod" >> $GITHUB_ENV
-          else
-            echo "TAG=dev" >> $GITHUB_ENV
-          fi
-
       - name: Build and push ${{ matrix.service }}
         uses: docker/build-push-action@v5
         with:
           context: .
           file: deployments/docker/Dockerfile.${{ matrix.service }}
           push: true
+          cache-from: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-${{ matrix.service }}:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-${{ matrix.service }}:buildcache,mode=max
           tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-${{ matrix.service }}:${{ env.TAG }}
+            ${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-${{ matrix.service }}:dev
