@@ -2,7 +2,9 @@ name: Build and Push Docker Images
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - develop
     tags: [ 'v*' ]
 
 jobs:
@@ -20,15 +22,22 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
+      - name: Set Docker Tags
+        id: vars
+        run: |
+          if [[ "${GITHUB_REF##*/}" == "main" ]]; then
+            echo "TAGS=${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-api:latest,${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-api:${GITHUB_SHA},${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-api:prod" >> $GITHUB_ENV
+          else
+            echo "TAGS=${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-api:dev-latest,${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-api:${GITHUB_SHA}-dev,${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-api:dev" >> $GITHUB_ENV
+          fi
+
       - name: Build and push API
         uses: docker/build-push-action@v5
         with:
           context: .
           file: deployments/docker/Dockerfile.api
           push: true
-          tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-api:latest
-            ${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-api:${{ github.sha }}
+          tags: ${{ env.TAGS }}
 
   build-worker:
     runs-on: ubuntu-latest
@@ -44,12 +53,19 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
+      - name: Set Docker Tags
+        id: vars
+        run: |
+          if [[ "${GITHUB_REF##*/}" == "main" ]]; then
+            echo "TAGS=docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-worker:latest,docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-worker:${GITHUB_SHA},docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-worker:prod" >> $GITHUB_ENV
+          else
+            echo "TAGS=docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-worker:dev-latest,docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-worker:${GITHUB_SHA}-dev,docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-worker:dev" >> $GITHUB_ENV
+          fi
+
       - name: Build and push Worker
         uses: docker/build-push-action@v5
         with:
           context: .
           file: deployments/docker/Dockerfile.worker
           push: true
-          tags: |
-            docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-worker:latest
-            docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/go-rabbitmq-notification-worker:${{ github.sha }}
+          tags: ${{ env.TAGS }}
