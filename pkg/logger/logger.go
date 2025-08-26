@@ -17,10 +17,10 @@ func NewAppLogger(env string) *zap.Logger {
 		err    error
 	)
 
-	if env == string(constants.EnvDevelopment) {
-		logger, err = NewLoggerDevelopment()
-	} else {
+	if env == string(constants.EnvProduction) {
 		logger, err = zap.NewProduction()
+	} else {
+		logger, err = NewLoggerDevelopment()
 	}
 
 	if err != nil {

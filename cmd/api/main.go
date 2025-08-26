@@ -38,7 +38,7 @@ import (
 func main() {
 	config.NewAppConfig("./configs")
 
-	env := config.GetString("ENV", "development")
+	env := config.GetString("ENV", "local")
 	httpPort := config.GetInt("HTTP_PORT", 3000)
 	rabbitMQUrl := config.GetString("RABBITMQ_URL", "amqp://admin:admin123@localhost:5672/")
 

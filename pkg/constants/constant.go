@@ -8,6 +8,7 @@ package constants
 type Env string
 
 const (
+	EnvLocal       Env = "local"
 	EnvDevelopment Env = "development"
 	EnvProduction  Env = "production"
 )
