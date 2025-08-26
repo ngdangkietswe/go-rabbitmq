@@ -29,12 +29,12 @@ func loadConfig(path string) {
 		env = string(constants.EnvLocal)
 	}
 
+	log.Printf("Loading configuration from env %s...", env)
+
 	if env == string(constants.EnvLocal) {
 		viper.AddConfigPath(path)
 		viper.SetConfigName("app")
 		viper.SetConfigType("env")
-
-		log.Printf("Loading local configuration from %s", path)
 
 		if err := viper.ReadInConfig(); err != nil {
 			panic(fmt.Errorf("failed to read config file: %w", err))
