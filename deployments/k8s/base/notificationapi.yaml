@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: notificationapi
-          image: docker.io/01092002/go-rabbitmq-notification-api:latest
+          image: docker.io/01092002/go-rabbitmq-notification-api:prod
           ports:
             - containerPort: 3000
           envFrom:
