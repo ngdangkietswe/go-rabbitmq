@@ -21,7 +21,7 @@ import (
 func main() {
 	config.NewAppConfig("./configs")
 
-	env := config.GetString("ENV", "development")
+	env := config.GetString("ENV", "local")
 
 	appLogger := logger.NewAppLogger(env)
 

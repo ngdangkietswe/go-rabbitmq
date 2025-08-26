@@ -8,13 +8,10 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ngdangkietswe/go-rabbitmq/pkg/constants"
 	"github.com/spf13/viper"
 	"log"
 	"os"
-)
-
-const (
-	DevelopmentEnv = "development"
 )
 
 func NewAppConfig(path string) {
@@ -29,15 +26,15 @@ func loadConfig(path string) {
 	if os.Getenv("ENV") != "" {
 		env = os.Getenv("ENV")
 	} else {
-		env = DevelopmentEnv
+		env = string(constants.EnvLocal)
 	}
 
-	if env == DevelopmentEnv {
+	if env == string(constants.EnvLocal) {
 		viper.AddConfigPath(path)
 		viper.SetConfigName("app")
 		viper.SetConfigType("env")
 
-		log.Printf("Loading development configuration from %s", path)
+		log.Printf("Loading local configuration from %s", path)
 
 		if err := viper.ReadInConfig(); err != nil {
 			panic(fmt.Errorf("failed to read config file: %w", err))
