@@ -1,0 +1,16 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: notificationapi-ingress
+spec:
+  rules:
+    - host: notificationapi.ngdangkietswe.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: notificationapi
+                port:
+                  number: 3000

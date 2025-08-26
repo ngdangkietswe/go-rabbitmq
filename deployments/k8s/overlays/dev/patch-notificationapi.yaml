@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notificationapi
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: notificationworker
+          image: docker.io/01092002/go-rabbitmq-notification-api:dev

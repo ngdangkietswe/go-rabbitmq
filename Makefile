@@ -35,6 +35,18 @@ kube-delete-notificationworker:
 kube-forward-notificationapi-port:
 	cd deployments/k8s && kubectl port-forward svc/notificationapi 3000:3000
 
+kube-apply-dev:
+	cd deployments/k8s && kubectl apply -k overlays/dev
+
+kube-apply-prod:
+	cd deployments/k8s && kubectl apply -k overlays/prod
+
+kube-delete-dev:
+	cd deployments/k8s && kubectl delete -k overlays/dev
+
+kube-delete-prod:
+	cd deployments/k8s && kubectl delete -k overlays/prod
+
 terraform-apply:
 	cd scripts && bash terraform.sh
 

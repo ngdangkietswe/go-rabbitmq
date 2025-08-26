@@ -2,9 +2,8 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: common-config
-  namespace: go-rabbitmq-production
 data:
-  ENV: "production"
+  ENV: "default"
   RABBITMQ_URL: "amqp://admin:admin123@rabbitmq:5672/"
   RABBITMQ_MANAGEMENT_ADDRESS: "http://rabbitmq:15672"
   RABBITMQ_USERNAME: "admin"
