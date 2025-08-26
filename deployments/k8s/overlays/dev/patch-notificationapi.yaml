@@ -7,5 +7,6 @@ spec:
   template:
     spec:
       containers:
-        - name: notificationworker
+        - name: notificationapi
           image: docker.io/01092002/go-rabbitmq-notification-api:dev
+          imagePullPolicy: Always

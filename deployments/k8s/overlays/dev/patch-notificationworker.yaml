@@ -9,3 +9,4 @@ spec:
       containers:
         - name: notificationworker
           image: docker.io/01092002/go-rabbitmq-notification-worker:dev
+          imagePullPolicy: Always
