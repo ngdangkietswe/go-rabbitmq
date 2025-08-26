@@ -12,6 +12,7 @@ import (
 	"github.com/ngdangkietswe/go-rabbitmq/internal/models"
 	"github.com/ngdangkietswe/go-rabbitmq/pkg/constants"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 	"net/http"
 	"time"
@@ -48,73 +49,131 @@ func NewRabbitMQService(url string, logger *zap.Logger) (*RabbitMQService, error
 		rabbitMQPassword:       config.GetString("RABBITMQ_PASSWORD", "admin123"),
 	}
 
-	if err := service.setupExchange(); err != nil {
-		if err := service.Close(); err != nil {
-			// ignore
-		}
+	exchanges := []*models.ExchangeConfig{
+		{
+			Name:       string(constants.ExchangeNotification),
+			Type:       "direct",
+			Durable:    true,
+			AutoDelete: false,
+		},
+		{
+			Name:       string(constants.ExchangeLog),
+			Type:       "fanout",
+			Durable:    true,
+			AutoDelete: false,
+		},
+	}
+
+	if err := service.setupExchanges(exchanges); err != nil {
+		logger.Error("Failed to setup exchanges", zap.Error(err))
 		return nil, err
 	}
 
-	if err := service.setupQueue(); err != nil {
-		if err := service.Close(); err != nil {
-			// ignore
-		}
+	queues := []*models.QueueConfig{
+		{
+			Name:       string(constants.QueueNotification),
+			Durable:    true,
+			AutoDelete: false,
+		},
+		{
+			Name:       string(constants.QueueLog),
+			Durable:    true,
+			AutoDelete: false,
+		},
+	}
+
+	if err := service.setupQueues(queues); err != nil {
+		logger.Error("Failed to setup queues", zap.Error(err))
+		return nil, err
+	}
+
+	bindings := []*models.BindingConfig{
+		{
+			Exchange:   string(constants.ExchangeNotification),
+			Queue:      string(constants.QueueNotification),
+			RoutingKey: string(constants.RoutingKeyNotification),
+		},
+		{
+			Exchange:   string(constants.ExchangeLog),
+			Queue:      string(constants.QueueLog),
+			RoutingKey: "",
+		},
+	}
+
+	if err := service.setupBindings(bindings); err != nil {
+		logger.Error("Failed to setup bindings", zap.Error(err))
 		return nil, err
 	}
 
 	return service, nil
 }
 
-func (r *RabbitMQService) setupExchange() error {
-	if err := r.ch.ExchangeDeclare(
-		string(constants.ExchangeNotification),
-		"direct",
-		true,
-		false,
-		false,
-		false,
-		nil,
-	); err != nil {
-		return fmt.Errorf("failed to declare exchange: %w", err)
-	}
+func (r *RabbitMQService) setupExchanges(exchanges []*models.ExchangeConfig) error {
+	lo.ForEach(exchanges, func(exchange *models.ExchangeConfig, _ int) {
+		if err := r.ch.ExchangeDeclare(
+			exchange.Name,
+			exchange.Type,
+			exchange.Durable,
+			exchange.AutoDelete,
+			false,
+			false,
+			nil,
+		); err != nil {
+			r.logger.Error("Failed to declare exchange", zap.String("exchange", exchange.Name), zap.Error(err))
+		} else {
+			r.logger.Info("Declared exchange", zap.String("exchange", exchange.Name))
+		}
+	})
 
 	return nil
 }
 
-func (r *RabbitMQService) setupQueue() error {
-	if _, err := r.ch.QueueDeclare(
-		string(constants.QueueNotification),
-		true,
-		false,
-		false,
-		false,
-		nil,
-	); err != nil {
-		return fmt.Errorf("failed to declare queue: %w", err)
-	}
-
-	if err := r.ch.QueueBind(
-		string(constants.QueueNotification),
-		string(constants.RoutingKeyNotification),
-		string(constants.ExchangeNotification),
-		false,
-		nil,
-	); err != nil {
-		return fmt.Errorf("failed to bind queue: %w", err)
-	}
+func (r *RabbitMQService) setupQueues(queues []*models.QueueConfig) error {
+	lo.ForEach(queues, func(queue *models.QueueConfig, _ int) {
+		if _, err := r.ch.QueueDeclare(
+			queue.Name,
+			queue.Durable,
+			queue.AutoDelete,
+			false,
+			false,
+			nil,
+		); err != nil {
+			r.logger.Error("Failed to declare queue", zap.String("queue", queue.Name), zap.Error(err))
+		} else {
+			r.logger.Info("Declared queue", zap.String("queue", queue.Name))
+		}
+	})
 
 	return nil
 }
 
-func (r *RabbitMQService) PublishMessage(notification *models.Notification) error {
+func (r *RabbitMQService) setupBindings(bindings []*models.BindingConfig) error {
+	lo.ForEach(bindings, func(binding *models.BindingConfig, _ int) {
+		if err := r.ch.QueueBind(
+			binding.Queue,
+			binding.RoutingKey,
+			binding.Exchange,
+			false,
+			nil,
+		); err != nil {
+			r.logger.Error("Failed to bind queue", zap.String("queue", binding.Queue), zap.String("exchange", binding.Exchange), zap.Error(err))
+		} else {
+			r.logger.Info("Bound queue", zap.String("queue", binding.Queue), zap.String("exchange", binding.Exchange))
+		}
+	})
+
+	return nil
+}
+
+func (r *RabbitMQService) PublishMessage(exchange, routingKey string, notification *models.Notification) error {
 	body, err := json.Marshal(notification)
 	if err != nil {
 		return fmt.Errorf("failed to marshal notification: %w", err)
 	}
 
 	if err = r.ch.Publish(
-		string(constants.ExchangeNotification),
-		string(constants.RoutingKeyNotification),
+		exchange,
+		routingKey,
 		false,
 		false,
 		amqp.Publishing{
@@ -132,54 +191,25 @@ func (r *RabbitMQService) PublishMessage(notification *models.Notification) erro
 	return nil
 }
 
-func (r *RabbitMQService) ConsumeMessages(handler func(notification *models.Notification) error) error {
+func (r *RabbitMQService) ConsumeMessages(queue string, handler func(delivery amqp.Delivery) error) error {
 	msgs, err := r.ch.Consume(
-		string(constants.QueueNotification),
-		"",
-		false,
-		false,
-		false,
-		false,
-		nil,
+		queue, "", false, false, false, false, nil,
 	)
-
 	if err != nil {
-		return fmt.Errorf("failed to register consumer: %w", err)
+		return fmt.Errorf("consume queue %s: %w", queue, err)
 	}
-
-	r.logger.Info("Consumer registered for notifications", zap.String("queue", string(constants.QueueNotification)))
 
 	forever := make(chan bool)
 
 	go func() {
 		for msg := range msgs {
-			var notification models.Notification
-			if err := json.Unmarshal(msg.Body, &notification); err != nil {
-				r.logger.Error("Failed to unmarshal notification", zap.Error(err))
-				err := msg.Nack(false, false)
-				if err != nil {
-					return
-				} // Reject the message
-				continue
-			}
-
-			r.logger.Info("Received notification", zap.String("id", notification.ID))
-
-			if err := handler(&notification); err != nil {
-				r.logger.Error("Failed to process notification", zap.String("id", notification.ID), zap.Error(err))
-				err := msg.Nack(false, false)
-				if err != nil {
-					return
-				} // Reject the message
-			} else {
-				r.logger.Info("Processed notification successfully", zap.String("id", notification.ID))
-				err := msg.Ack(false)
-				if err != nil {
-					return
-				} // Acknowledge the message
+			if err := handler(msg); err != nil {
+				r.logger.Error("Failed to process message", zap.Error(err))
 			}
 		}
 	}()
+
+	r.logger.Info("Consumer registered", zap.String("queue", queue))
 
 	<-forever
 

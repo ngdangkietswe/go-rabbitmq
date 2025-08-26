@@ -6,10 +6,13 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/config"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/models"
 	"github.com/ngdangkietswe/go-rabbitmq/internal/services"
+	"github.com/ngdangkietswe/go-rabbitmq/pkg/constants"
 	"github.com/ngdangkietswe/go-rabbitmq/pkg/logger"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 	"log"
 	"os"
@@ -43,10 +46,6 @@ func main() {
 
 	notificationService := services.NewNotificationService(appLogger)
 
-	handler := func(notification *models.Notification) error {
-		return notificationService.ProcessNotification(notification)
-	}
-
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
@@ -61,7 +60,27 @@ func main() {
 
 	appLogger.Info("Starting RabbitMQ consumer...", zap.String("url", rabbitMQUrl))
 
-	if err := rabbitMQ.ConsumeMessages(handler); err != nil {
+	// consume messages from queue_notification
+	if err := rabbitMQ.ConsumeMessages(string(constants.QueueNotification), func(delivery amqp.Delivery) error {
+		var notification models.Notification
+
+		if err := json.Unmarshal(delivery.Body, &notification); err != nil {
+			if err := delivery.Nack(false, false); err != nil {
+				appLogger.Error("Failed to nack message", zap.Error(err))
+				return err
+			}
+		}
+
+		return notificationService.ProcessNotification(&notification)
+	}); err != nil {
+		log.Fatalf("Failed to consume messages: %v", err)
+	}
+
+	// consume messages from queue_log
+	if err := rabbitMQ.ConsumeMessages(string(constants.QueueLog), func(delivery amqp.Delivery) error {
+		appLogger.Info("Log message received", zap.ByteString("body", delivery.Body))
+		return nil
+	}); err != nil {
 		log.Fatalf("Failed to consume messages: %v", err)
 	}
 }
