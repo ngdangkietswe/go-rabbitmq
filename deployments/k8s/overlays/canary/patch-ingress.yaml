@@ -3,11 +3,11 @@ kind: Ingress
 metadata:
   name: notificationapi-ingress
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-weight: "10" # 10% traffic to canary
 spec:
-  ingressClassName: nginx
   rules:
-    - host: notificationapi.local
+    - host: notificationapi.ngdangkietswe.local
       http:
         paths:
           - path: /
@@ -16,5 +16,4 @@ spec:
               service:
                 name: notificationapi
                 port:
-                  name: http
                   number: 3000
